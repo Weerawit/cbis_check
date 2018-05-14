@@ -5,6 +5,8 @@ https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
 
+from __future__ import print_function
+
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 # To use a consistent encoding
@@ -12,6 +14,7 @@ from codecs import open
 from os import path
 import subprocess
 from distutils.command.sdist import sdist
+import sys
 
 here = path.abspath(path.dirname(__file__))
 
@@ -21,7 +24,7 @@ class Sdist(sdist):
         version = subprocess.check_output(['git', 'describe', '--tags', '--dirty', '--always'])
         self.distribution.metadata.version = version.strip()
         if 'dirty' in version:
-            print('Current source code is not in git yet')
+            print('[FAIL] Current source code is not in git yet', file=sys.stderr)
             return
         return sdist.run(self)
 
