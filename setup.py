@@ -19,7 +19,7 @@ here = path.abspath(path.dirname(__file__))
 class Sdist(sdist):
     def run(self):
         version = subprocess.check_output(['git', 'describe', '--tags', '--always'])
-        self.distribution.metadata.version = version
+        self.distribution.metadata.version = version.strip()
         return sdist.run(self)
 
 
