@@ -26,6 +26,9 @@ class Sdist(sdist):
         if 'dirty' in version:
             print('[FAIL] Current source code is not in git yet', file=sys.stderr)
             return
+
+        with open('VERSION', 'wb') as f:
+            f.write(version.strip())
         return sdist.run(self)
 
 
@@ -34,7 +37,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 
-my_version = subprocess.check_output(['git', 'describe', '--tags', '--dirty', '--always']).strip()
+my_version = open('VERSION').read()
 
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
