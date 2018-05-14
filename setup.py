@@ -23,8 +23,6 @@ class Sdist(sdist):
     def run(self):
         version = subprocess.check_output(['git', 'describe', '--tags', '--dirty', '--always'])
         self.distribution.metadata.version = version.strip()
-        self.distribution.version = version.strip()
-        #self.metadata.version = version.strip()
         if 'dirty' in version:
             print('[FAIL] Current source code is not in git yet', file=sys.stderr)
             return
@@ -35,6 +33,8 @@ class Sdist(sdist):
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+
+my_version = subprocess.check_output(['git', 'describe', '--tags', '--dirty', '--always']).strip()
 
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
@@ -59,7 +59,7 @@ setup(
     # For a discussion on single-sourcing the version across setup.py and the
     # project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='',  # Required
+    version=my_version,  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
