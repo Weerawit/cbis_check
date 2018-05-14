@@ -2,3 +2,4 @@ venv
 dist
 MANIFEST
 .idea
+*.egg-info
