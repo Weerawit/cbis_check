@@ -23,6 +23,8 @@ class Sdist(sdist):
     def run(self):
         version = subprocess.check_output(['git', 'describe', '--tags', '--dirty', '--always'])
         self.distribution.metadata.version = version.strip()
+        self.distribution.version = version.strip()
+        #self.metadata.version = version.strip()
         if 'dirty' in version:
             print('[FAIL] Current source code is not in git yet', file=sys.stderr)
             return
