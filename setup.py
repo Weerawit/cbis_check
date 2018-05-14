@@ -14,9 +14,27 @@ from codecs import open
 from os import path
 import subprocess
 from distutils.command.sdist import sdist
+import distutils.cmd
 import sys
 
 here = path.abspath(path.dirname(__file__))
+
+
+class GitVersion(distutils.cmd.Command):
+    """A custom command to run get the git tag name"""
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        version = subprocess.check_output(['git', 'describe', '--tags', '--dirty', '--always'])
+        with open('VERSION', 'wb') as f:
+            f.write(version.strip())
 
 
 class Sdist(sdist):
@@ -203,6 +221,7 @@ setup(
 
     cmdclass={
         'sdist': Sdist,
+        'version': GitVersion
     },
 
 )
