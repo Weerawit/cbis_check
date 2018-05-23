@@ -77,7 +77,10 @@ class CheckEngine(object):
             host_pattern = 'overcloud-*'
         if self.test_flag:
             cmd = cmd
+        elif host_pattern == 'undercloud':
+            cmd = 'echo \"hostname: `hostname`\"; %s ' % cmd
         else:
+
             cmd_host = 'grep -E \'%s\' /etc/hosts > /tmp/check_host' % host_pattern
             self.run_shell(cmd_host).wait()
 
@@ -167,7 +170,7 @@ class CheckEngine(object):
         """
         parser = argparse.ArgumentParser(
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            description='Summary ndc report to csv file')
+            description='CBIS post installation check')
 
         parser.add_argument('-uc', '--uc_hostname',
                             required=True,

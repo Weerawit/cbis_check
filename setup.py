@@ -72,7 +72,7 @@ setup(
     # There are some restrictions on what makes a valid project name
     # specification here:
     # https://packaging.python.org/specifications/core-metadata/#name
-    name='cbis_post_install_check',  # Required
+    name='cbis_check',  # Required
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
@@ -85,7 +85,7 @@ setup(
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#summary
-    description='CBIS Post installation check script',  # Required
+    description='CBIS check script',  # Required
 
     # This is an optional longer description of your project that represents
     # the body of text which users will see when they visit PyPI.
@@ -198,6 +198,7 @@ setup(
     # MANIFEST.in as well.
     package_data={  # Optional
         'cbis_post_install_check': ['logging.ini'],
+        'cbis_health_check': ['logging.ini'],
     },
 
     # need to place data files outside of your packages. See:
@@ -216,6 +217,7 @@ setup(
     entry_points={  # Optional
         'console_scripts': [
             'cbis-post-install-check=cbis_post_install_check.post_install_check:main',
+            'cbis-health-check=cbis_health_check.cbis_health_check:main',
         ],
     },
 
