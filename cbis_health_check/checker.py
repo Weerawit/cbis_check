@@ -92,13 +92,13 @@ class PCSClusterStatus(BaseCheck):
         return 'controller-*'
 
     def call_back(self, hostname, data, timestamp):
-        found_pcsd = None
+        found_pcsd = False
         for line in data.splitlines():
             if line:
                 if 'PCSD Status' in line:
                     found_pcsd = True
                     continue
-                if 'Online' not in line:
+                if 'Online' not in line and found_pcsd:
                     values = line.split(':')
                     self.conn.execute('insert into pcs_cluster (host) values (?)',
                                       (values[0],))
@@ -681,6 +681,7 @@ class CpuFrequency(BaseCheck):
         output = ''
         for row in self.conn.execute("select host, value from cpu_frequency "
                                      "where value not like '%2%Ghz%' and value not like '%3%Ghz%' "
+                                     "and value not like '%1%Ghz%' "
                                      "order by host", ):
             output += '%s,NOK\n\r' % row[0]
 
