@@ -431,6 +431,47 @@ class NoveServiceList(BaseCheck):
         return output
 
 
+class NovaList(BaseCheck):
+    """Check nova list on overcloud
+    nova list --all --fields host,name,status,power_state
+     """
+
+    def init_table(self):
+        self.conn = self.engine.get_db_connection(in_memory=True)
+        self.conn.execute('CREATE TABLE IF NOT EXISTS nova_list (host text, key text, value text)')
+        self.conn.execute('DELETE FROM nova_list')
+
+    def cmd(self):
+        if self.engine.test_flag:
+            return 'cat /Users/weerawit/Downloads/compute.log'
+        else:
+            return "source /home/stack/overcloudrc; nova list --all --fields host,name,status,power_state"
+
+    def host_pattern(self):
+        return 'undercloud'
+
+    def call_back(self, hostname, data, timestamp):
+        for line in data.splitlines():
+            if line:
+                if '+' in line or 'ID' in line:
+                    continue
+                else:
+                    values = line.split('|')
+                    if 'ACTIVE' not in values[4] or 'Running' not in values[5]:
+
+                        self.conn.execute('insert into nova_list (host) values (?)',
+                                          (values[3].strip(), ))
+                        self.conn.commit()
+
+    def summary(self):
+        output = ''
+        for row in self.conn.execute("select distinct host from nova_list "
+                                     "order by host",):
+            output += '%s,NOK\n\r' % row[0]
+
+        return output
+
+
 class NeutronAgentList(BaseCheck):
     """Check neutron agent-list on overcloud
      """
@@ -652,6 +693,7 @@ class OvsofctlDumpflow(BaseCheck):
 
 class CpuFrequency(BaseCheck):
     """Check all cpu frequency  cpupower frequency-info |grep "current CPU"
+    CPU should more than 1 GHz
      """
 
     def init_table(self):
@@ -690,6 +732,7 @@ class CpuFrequency(BaseCheck):
 
 class HugePageSetting(BaseCheck):
     """Check all hugepage cat /proc/meminfo |grep -i hugepagesize in all node"
+    compute node should have 1048576 Kb (Applicable for sriov pod)
      """
 
     def init_table(self):

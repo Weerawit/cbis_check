@@ -23,12 +23,13 @@ logging.config.fileConfig(os.path.join(PATH, 'logging.ini'), disable_existing_lo
 
 class CheckEngine(object):
 
-    def __init__(self, uc, test_flag, output_file):
+    def __init__(self, uc, test_flag, output_file, output_csv_file):
         self.uc = uc
         self.test_flag = test_flag
         self.output_file = output_file
+        self.output_csv_file = output_csv_file
 
-    def _format(self, checker, output_file):
+    def _format(self, checker, output_file, output_csv_file):
 
         table = PrettyTable(['host', 'status'])
         table.align["host"] = "l"
@@ -37,27 +38,36 @@ class CheckEngine(object):
         table.header_style = 'title'
         output = checker.check()
         line_list = output.splitlines()
+
+        csv_records = []
         if len(line_list) > 0:
             for line in output.splitlines():
                 if line:
-                    table.add_row(line.split(','))
+                    data = line.split(',')
+                    table.add_row(data)
+                    csv_records.append(data)
         else:
             table.add_row(['all', 'OK'])
+            csv_records.append(['all', 'OK'])
 
         output_file.write('%s\n\r' % table)
         output_file.flush()
 
+        for record in csv_records:
+            output_csv_file.write('"%s",%s,%s' % (checker.__doc__.replace('\n', ' '), record[0], record[1]))
+        output_csv_file.flush()
+
     def check_all(self):
         checker_list = [cls(self) for cls in BaseCheck.__subclasses__()]
-        with open(self.output_file, 'wb') as f:
+        with open(self.output_file, 'wb') as f, open(self.output_csv_file, 'wb') as f_csv:
             for checker in checker_list:
-                self._format(checker, output_file=f)
+                self._format(checker, output_file=f, output_csv_file=f_csv)
 
     def check(self, args):
-        with open(self.output_file, 'wb') as f:
+        with open(self.output_file, 'wb') as f, open(self.output_csv_file, 'wb') as f_csv:
             for arg_name in args:
                 cls = globals()[arg_name]
-                self._format(cls(self), output_file=f)
+                self._format(cls(self), output_file=f, output_csv_file=f_csv)
 
     def run_shell(self, cmd):
 
@@ -80,7 +90,6 @@ class CheckEngine(object):
         elif host_pattern == 'undercloud':
             cmd = 'echo \"hostname: `hostname`\"; %s ' % cmd
         else:
-
             cmd_host = 'grep -E \'%s\' /etc/hosts > /tmp/check_host' % host_pattern
             self.run_shell(cmd_host).wait()
 
@@ -174,7 +183,7 @@ class CheckEngine(object):
 
         parser.add_argument('-uc', '--uc_hostname',
                             required=True,
-                            help='Undercloud hostname')
+                            help='Undercloud hostname (sample rst-exp3-uc)')
 
         parser.add_argument('-o', '--output',
                             default='/tmp',
@@ -202,15 +211,17 @@ def main(args=sys.argv[1:]):
 
     output_file = "%s/%s-post_install_check_%s.txt" % (output_folder, uc, now.strftime("%Y_%m_%d_%H_%M"))
 
+    csv_file = "%s/%s-post_install_check_%s.csv" % (output_folder, uc, now.strftime("%Y_%m_%d_%H_%M"))
+
     test_case = args.test_case
 
-    check_engine = CheckEngine(uc=uc, test_flag=args.test, output_file=output_file)
+    check_engine = CheckEngine(uc=uc, test_flag=args.test, output_file=output_file, output_csv_file=csv_file)
     if not test_case:
         check_engine.check_all()
     else:
         check_engine.check(test_case.split(','))
 
-    logger.info('check complete, output locate on : %s' % output_file)
+    logger.info('check complete, output locate on : %s, csv file on : %s' % (output_file, csv_file))
 
 
 if __name__ == "__main__":
