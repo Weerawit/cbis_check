@@ -50,11 +50,11 @@ class CheckEngine(object):
             table.add_row(['all', 'OK'])
             csv_records.append(['all', 'OK'])
 
-        output_file.write('%s\n\r' % table)
+        output_file.write('%s\n' % table)
         output_file.flush()
 
         for record in csv_records:
-            output_csv_file.write('"%s",%s,%s' % (checker.__doc__.replace('\n', ' '), record[0], record[1]))
+            output_csv_file.write('"%s",%s,%s\n' % (checker.__doc__.replace('\n', ' '), record[0], record[1]))
         output_csv_file.flush()
 
     def check_all(self):

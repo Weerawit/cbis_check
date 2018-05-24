@@ -220,51 +220,6 @@ class CephService(BaseCheck):
 
 
 
-class NovaLibvirtConfiguration(BaseCheck):
-    """Check nova's configuration for disk_cachemodes on compute
-     disk_cachemodes = network=writeback
-     """
-
-    def init_table(self):
-        self.conn = self.engine.get_db_connection(in_memory=True)
-        self.conn.execute('CREATE TABLE IF NOT EXISTS nova_libvirt (host text, key text, value text)')
-        self.conn.execute('DELETE FROM nova_libvirt')
-
-    def cmd(self):
-        if self.engine.test_flag:
-            return 'cat /Users/weerawit/Downloads/compute.log'
-        else:
-            return 'sudo crudini --get --format=ini /etc/nova/nova.conf libvirt disk_cachemodes 2>&1'
-
-    def host_pattern(self):
-        return 'compute-*'
-
-    def call_back(self, hostname, data, timestamp):
-        for line in data.splitlines():
-            if line:
-                try:
-                    if 'Parameter not found' in line:
-                        self.conn.execute('insert into nova_libvirt (host, key, value) values (?, ?, ?)',
-                                      (hostname, 'disk_cachemodes', ''))
-                        self.conn.commit()
-                    elif ' = ' in line:
-                        key, value = line.split(' = ')
-                        self.conn.execute('insert into nova_libvirt (host, key, value) values (?, ?, ?)',
-                                          (hostname, key.strip(), value.strip()))
-                        self.conn.commit()
-
-                except ValueError:
-                    pass
-
-    def summary(self):
-        output = ''
-        for row in self.conn.execute("select distinct host from nova_libvirt "
-                                     "where (key = 'disk_cachemodes' and value != 'network=writeback')"
-                                     "order by host",):
-            output += '%s,NOK\n\r' % row[0]
-
-        return output
-
 
 class CephOSDConfig(BaseCheck):
     """Check osd config on storage node
@@ -564,7 +519,7 @@ class SriovNumberOfVF(BaseCheck):
         if self.engine.test_flag:
             return 'cat /Users/weerawit/Downloads/compute.log'
         else:
-            return "sudo ip l |grep vf |wc -l"
+            return "grep config_sriov.py /usr/lib/systemd/system/sriov.service; sudo ip l |grep vf |wc -l"
 
     def host_pattern(self):
         return 'compute-*'
@@ -572,9 +527,14 @@ class SriovNumberOfVF(BaseCheck):
     def call_back(self, hostname, data, timestamp):
         for line in data.splitlines():
             if line:
-                self.conn.execute('insert into sriov_number_vf (host, value) values (?, ?)',
+                if '--vf_num' in line:
+                    values = line.split('--vf_num')
+                    if values[1].strip() == '0':
+                        break
+                else:
+                    self.conn.execute('insert into sriov_number_vf (host, value) values (?, ?)',
                                   (hostname, line.strip()))
-                self.conn.commit()
+                    self.conn.commit()
 
     def summary(self):
         output = ''
@@ -587,7 +547,7 @@ class SriovNumberOfVF(BaseCheck):
 
 
 class IPAEns6F0andEns6F1Interface(BaseCheck):
-    """Check sudo ip a |grep -E "ens6f0|ens6f1 should not have DONW Interface
+    """Check sudo ip a |grep -E ens6f0|ens6f1 should not have DOWN Interface
      """
 
     def init_table(self):
@@ -692,7 +652,7 @@ class OvsofctlDumpflow(BaseCheck):
 
 
 class CpuFrequency(BaseCheck):
-    """Check all cpu frequency  cpupower frequency-info |grep "current CPU"
+    """Check all cpu frequency  cpupower frequency-info |grep current CPU
     CPU should more than 1 GHz
      """
 
@@ -731,7 +691,7 @@ class CpuFrequency(BaseCheck):
 
 
 class HugePageSetting(BaseCheck):
-    """Check all hugepage cat /proc/meminfo |grep -i hugepagesize in all node"
+    """Check all hugepage cat /proc/meminfo |grep -i hugepagesize in all node
     compute node should have 1048576 Kb (Applicable for sriov pod)
      """
 
@@ -744,7 +704,7 @@ class HugePageSetting(BaseCheck):
         if self.engine.test_flag:
             return 'cat /Users/weerawit/Downloads/compute.log'
         else:
-            return 'cat /proc/meminfo |grep -i hugepagesize'
+            return 'grep config_sriov.py /usr/lib/systemd/system/sriov.service 2>&1; sudo cat /proc/meminfo |grep -i hugepagesize'
 
     def host_pattern(self):
         return '*'
@@ -752,14 +712,21 @@ class HugePageSetting(BaseCheck):
     def call_back(self, hostname, data, timestamp):
         for line in data.splitlines():
             if line:
-                try:
-                    key, value = line.split(':')
-                    self.conn.execute('insert into hugepage (host, key, value) values (?, ?, ?)',
-                                      (hostname, key.strip(), value.strip()))
-                    self.conn.commit()
+                if '--vf_num' in line:
+                    values = line.split('--vf_num')
+                    if values[1].strip() == '0':
+                        break
+                elif 'No such file or directory' in line:
+                    break
+                else:
+                    try:
+                        key, value = line.split(':')
+                        self.conn.execute('insert into hugepage (host, key, value) values (?, ?, ?)',
+                                          (hostname, key.strip(), value.strip()))
+                        self.conn.commit()
 
-                except ValueError:
-                    pass
+                    except ValueError:
+                        pass
 
     def summary(self):
         output = ''
