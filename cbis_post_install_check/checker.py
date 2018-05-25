@@ -300,11 +300,10 @@ class NovaDefaultConfiguration(BaseCheck):
     controller scheduler_max_attempts and scheduler_default_filters
 
     scheduler_max_attempts = 100
-    scheduler_default_filters = AggregateInstanceExtraSpecsFilter,RetryFilter,
-                                AvailabilityZoneFilter,NUMATopologyFilter,
-                                PciPassthroughFilter,RamFilter,ComputeFilter,
-                                ImagePropertiesFilter,CoreFilter,
-                                ServerGroupAffinityFilter,ServerGroupAntiAffinityFilter
+    scheduler_default_filters = ServerGroupAffinityFilter,ServerGroupAntiAffinityFilter,
+                                AggregateInstanceExtraSpecsFilter,AvailabilityZoneFilter,RetryFilter,
+                                NUMATopologyFilter,PciPassthroughFilter,RamFilter,ComputeFilter,
+                                ImagePropertiesFilter,CoreFilter
 
     """
 
