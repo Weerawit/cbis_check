@@ -254,7 +254,7 @@ class RabbitMqBacklog(BaseCheck):
     def summary(self):
         output = ''
         for row in self.conn.execute("select distinct host from rabbitmqctl "
-                                     "where value not like '%4098%' order by host"):
+                                     "where value not like '%4096%' order by host"):
             output += '%s,NOK\n\r' % row[0]
 
         return output
@@ -308,10 +308,10 @@ class NovaDefaultConfiguration(BaseCheck):
 
     """
 
-    scheduler_default_filters = 'AggregateInstanceExtraSpecsFilter,RetryFilter,AvailabilityZoneFilter,' \
+    scheduler_default_filters = 'ServerGroupAffinityFilter,ServerGroupAntiAffinityFilter,' \
+                                'AggregateInstanceExtraSpecsFilter,AvailabilityZoneFilter,RetryFilter,' \
                                 'NUMATopologyFilter,PciPassthroughFilter,RamFilter,ComputeFilter,' \
-                                'ImagePropertiesFilter,CoreFilter,ServerGroupAffinityFilter,' \
-                                'ServerGroupAntiAffinityFilter'
+                                'ImagePropertiesFilter,CoreFilter'
 
     def init_table(self):
         self.conn = self.engine.get_db_connection(in_memory=True)
