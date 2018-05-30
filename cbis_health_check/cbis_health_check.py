@@ -12,6 +12,7 @@ import subprocess
 import re
 import datetime
 from prettytable import PrettyTable
+import uuid
 from checker import *
 
 
@@ -83,6 +84,8 @@ class CheckEngine(object):
     def run_xargs(self, host_pattern, cmd, callback):
         now = datetime.datetime.now()
 
+        temp_file_name = '/tmp/health_check_%s' % str(uuid.uuid4())
+
         if host_pattern == '*':
             host_pattern = 'overcloud-*'
         if self.test_flag:
@@ -90,12 +93,13 @@ class CheckEngine(object):
         elif host_pattern == 'undercloud':
             cmd = 'echo \"hostname: `hostname`\"; %s ' % cmd
         else:
-            cmd_host = 'grep -E \'%s\' /etc/hosts > /tmp/check_host' % host_pattern
+            cmd_host = 'grep -E \'%s\' /etc/hosts > %s' % (host_pattern, temp_file_name)
             self.run_shell(cmd_host).wait()
 
             cmd = "while read -r name <&3; do ssh -o ConnectTimeout=3 -o LogLevel=error " \
                   "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " \
-                  "cbis-admin@\"$name\" 'echo \"hostname: `hostname`\"; %s ' || true; done 3< /tmp/check_host" % cmd
+                  "cbis-admin@\"$name\" 'echo \"hostname: `hostname`\"; %s ' || true; done 3< %s; rm %s" % \
+                  (cmd, temp_file_name, temp_file_name)
 
         hostname_re = re.compile('hostname: ')
 
