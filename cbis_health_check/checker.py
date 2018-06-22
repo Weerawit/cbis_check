@@ -788,3 +788,46 @@ class NovaLibvirtConfiguration(BaseCheck):
             output += '%s,NOK\n\r' % row[0]
 
         return output
+
+
+class IronicNodelist(BaseCheck):
+    """Check ironic node-list on undercloud
+    Power State should be power-on
+    Provisioning State should be active
+    Maintenance should be False
+     """
+
+    def init_table(self):
+        self.conn = self.engine.get_db_connection(in_memory=True)
+        self.conn.execute('CREATE TABLE IF NOT EXISTS ironic_node_list (host text, key text, value text)')
+        self.conn.execute('DELETE FROM ironic_node_list')
+
+    def cmd(self):
+        if self.engine.test_flag:
+            return 'cat /Users/weerawit/Downloads/compute.log'
+        else:
+            return "source /home/stack/stackrc; ironic node-list"
+
+    def host_pattern(self):
+        return 'undercloud'
+
+    def call_back(self, hostname, data, timestamp):
+        for line in data.splitlines():
+            if line:
+                if '+' in line or 'UUID' in line:
+                    continue
+                else:
+                    values = line.split('|')
+                    if 'power on' not in values[4] or 'active' not in values[5] or 'False' not in values[6]:
+
+                        self.conn.execute('insert into ironic_node_list (host) values (?)',
+                                          (values[2].strip(), ))
+                        self.conn.commit()
+
+    def summary(self):
+        output = ''
+        for row in self.conn.execute("select distinct host from ironic_node_list "
+                                     "order by host",):
+            output += '%s,NOK\n\r' % row[0]
+
+        return output
