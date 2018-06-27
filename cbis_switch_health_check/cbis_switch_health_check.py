@@ -5,12 +5,12 @@ from __future__ import print_function
 
 import argparse
 import sys
-import os
+
+import sqlite3
 import logging.config
 import datetime
 from prettytable import PrettyTable
 import pexpect
-import contextlib
 from checker import *
 
 
@@ -34,27 +34,48 @@ class CheckEngine(object):
         self.username = 'nokia'
         self.password = 'nokia1234'
 
-        GENERIC_CHECK = [InterfaceStatus(), SystemStatus(), VLTStatus(), FEFDStatus(), AlarmStatus(), CPUStatus(), MemoryStatus()]
+        self.__check_config = self.__setup()
 
-        SPINE_MGT = list(GENERIC_CHECK)
+    def __load_config(self, config_file):
+        return [GenericCheck(line.split(',')[0].strip(), line.split(',')[1].strip()) if line.strip().split(',').__len__() > 1
+                         else GenericCheck(line.strip()) for line in open(os.path.join(PATH, config_file))]
 
-        SPINE_NEP = list(GENERIC_CHECK)
+    def __setup(self):
 
-        SPINE_EXP = list(GENERIC_CHECK)
+        generic_check = self.__load_config('generic_check.txt')
+        generic_check.extend([CPUStatus(), MemoryStatus(), CRCError(self), FECError(self)])
 
-        SPINE_FABRIC = list(GENERIC_CHECK)
+        spine_mgt = self.__load_config('spine_mgt_check.txt')
+        spine_mgt.extend(generic_check)
 
-        SPINE_SEC = list(GENERIC_CHECK)
+        spine_nep = self.__load_config('spine_nep_check.txt')
+        spine_nep.extend(generic_check)
 
-        BORDER_LEAF = list(GENERIC_CHECK)
+        spine_exp = self.__load_config('spine_exp_check.txt')
+        spine_exp.extend(generic_check)
 
-        self.__check_config = {'spine-mgt': SPINE_MGT,
-                       'spine-nep': SPINE_NEP,
-                       'spine-exp': SPINE_EXP,
-                       'spine-fabric': SPINE_FABRIC,
-                       'spine-sec': SPINE_SEC,
-                       'border-leaf': BORDER_LEAF
-                       }
+        spine_fabric = self.__load_config('spine_fabric_check.txt')
+        spine_fabric.extend(generic_check)
+
+        spine_sec = self.__load_config('spine_sec_check.txt')
+        spine_sec.extend(generic_check)
+
+        border_leaf = self.__load_config('border_leaf_check.txt')
+        border_leaf.extend(generic_check)
+
+        return {'spine-mgt': spine_mgt,
+               'spine-nep': spine_nep,
+               'spine-exp': spine_exp,
+               'spine-fabric': spine_fabric,
+               'spine-sec': spine_sec,
+               'border-leaf': border_leaf
+               }
+
+    def get_db_connection(self, in_memory=False):
+        if in_memory:
+            return sqlite3.connect(':memory:')
+        else:
+            return sqlite3.connect(PATH + '/' + self.switch_ip + '.db')
 
     def check_all(self):
         records = []
@@ -87,6 +108,12 @@ class CheckEngine(object):
                 checker_list = self.__check_config.get(self.switch_type)
 
                 for checker in checker_list:
+
+                    if isinstance(checker, str):
+                        checker = GenericCheck(checker)
+                    elif isinstance(checker, tuple):
+                        checker = GenericCheck(checker[0], checker[1])
+
                     cmd = checker.cmd()
                     logger.info('executing %s' % (cmd,))
 

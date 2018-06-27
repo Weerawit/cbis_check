@@ -43,7 +43,7 @@ class Sdist(sdist):
         self.distribution.metadata.version = version.strip()
         if 'dirty' in version:
             print('[FAIL] Current source code is not in git yet', file=sys.stderr)
-            return
+            #return
 
         with open('VERSION', 'wb') as f:
             f.write(version.strip())
@@ -199,6 +199,7 @@ setup(
     package_data={  # Optional
         'cbis_post_install_check': ['logging.ini'],
         'cbis_health_check': ['logging.ini'],
+        'cbis_switch_health_check': ['logging.ini', '*.txt'],
     },
 
     # need to place data files outside of your packages. See:
@@ -218,6 +219,7 @@ setup(
         'console_scripts': [
             'cbis-post-install-check=cbis_post_install_check.post_install_check:main',
             'cbis-health-check=cbis_health_check.cbis_health_check:main',
+            'cbis-switch-check=cbis_switch_health_check.cbis_switch_health_check:main',
         ],
     },
 

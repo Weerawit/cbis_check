@@ -4,3 +4,4 @@ MANIFEST
 .idea
 *.egg-info
 VERSION
+*.db

@@ -3,17 +3,11 @@
 
 from __future__ import print_function
 import abc
-import sqlite3
 import os
+import re
+import contextlib
 
 PATH = os.path.dirname(os.path.abspath(__file__))
-
-
-def get_db_connection(self, in_memory=False):
-    if in_memory:
-        return sqlite3.connect(':memory:')
-    else:
-        return sqlite3.connect(PATH + '/' + self.switch_ip + '.db')
 
 
 class BaseCheck(object):
@@ -29,78 +23,28 @@ class BaseCheck(object):
         raise NotImplemented()
 
 
-class InterfaceStatus(BaseCheck):
+class GenericCheck(BaseCheck):
+    def __init__(self, cmd_str, title=None):
+        self.cmd_str = cmd_str
+        if title is None:
+            self.title = cmd_str.split('|')[0].strip()
+        else:
+            self.title = title
 
     def cmd(self):
-        return 'show interfaces description | except "unused port|Vlan" | grep "NO  admin" | no-more'
+        return self.cmd_str
 
     def call_back(self, data, timestamp):
-        for line in data.splitlines():
+        lines = data.splitlines()
+        i = 0
+        while i < len(lines) - 1:
+            line = lines[i]
+            i += 1
             if not line:
                 continue
-            if 'show ' not in line:
-                return ['Interface Status', 'NOK']
-        return ['Interface Status', 'OK']
-
-
-class SystemStatus(BaseCheck):
-
-    def cmd(self):
-        return 'show system | grep "down" | no-more'
-
-    def call_back(self, data, timestamp):
-        for line in data.splitlines():
-            if not line:
-                continue
-            if 'show ' not in line:
-                return ['System Status', 'NOK']
-
-        return ['System Status', 'OK']
-
-
-class VLTStatus(BaseCheck):
-
-    def cmd(self):
-        return 'show vlt brief | grep "down|no" | no-more'
-
-    def call_back(self, data, timestamp):
-        for line in data.splitlines():
-            if not line:
-                continue
-            if 'show ' not in line:
-                return ['VLT Status', 'NOK']
-
-        return ['VLT Status', 'OK']
-
-
-class FEFDStatus(BaseCheck):
-
-    def cmd(self):
-        return 'show fefd | grep "Unknown|Err-disabled" ignore-case | no-more'
-
-    def call_back(self, data, timestamp):
-        for line in data.splitlines():
-            if not line:
-                continue
-            if 'show ' not in line:
-                return ['FEFD Status', 'NOK']
-
-        return ['FEFD Status', 'OK']
-
-
-class AlarmStatus(BaseCheck):
-
-    def cmd(self):
-        return 'show alarms | except "Controlling Bridge:|Minor Alarms|No minor alarms|Major Alarms|No major alarms|===|-----|Alarm Type" | no-more'
-
-    def call_back(self, data, timestamp):
-        for line in data.splitlines():
-            if not line:
-                continue
-            if 'show ' not in line:
-                return ['Alarm Status', 'NOK']
-
-        return ['Alarm Status', 'OK']
+            if self.title not in line:
+                return [self.title, 'NOK']
+        return [self.title, 'OK']
 
 
 class CPUStatus(BaseCheck):
@@ -149,13 +93,119 @@ class MemoryStatus(BaseCheck):
         return ['Memory Status', 'OK']
 
 
+class CRCError(BaseCheck):
+
+    def __init__(self, engine):
+        self.engine = engine
+
+    def cmd(self):
+        return 'show interfaces | grep "twentyFiveGigE|hundredGigE|tengigabit|fortyGigE|CRC" | no-more'
+
+    def call_back(self, data, timestamp):
+        conn = self.engine.get_db_connection()
+        is_error = False
+        with contextlib.closing(conn):
+            conn.execute('CREATE TABLE IF NOT EXISTS crc_interfaces (key text, value text)')
+
+            rows = conn.execute('SELECT key, value from crc_interfaces')
+            previous_values = dict([(k, v) for k, v in rows])
+
+            conn.execute('delete from crc_interfaces')
+
+            current_values = {}
+            lines = data.splitlines()
+            i = 0
+            while i < len(lines):
+                line = lines[i]
+                i += 1
+                if not line or 'show interfaces' in line:
+                    continue
+                match = re.match('^(?P<if_name>(twentyFiveGigE|hundredGigE|tengigabit|fortyGigE) .*?\s)', line)
+                if match is not None:
+                    if_name = match.groupdict()['if_name'].strip()
+                    next_line = lines[i]
+                    i += 1
+                    if 'CRC' in next_line:
+                        values = next_line.split(',')
+                        values2 = values[0].strip().split(' ')
+                        crc = values2[0].strip()
+                        current_values[if_name] = crc
+
+            #compare with previous values
+            for key in current_values:
+                current_value = current_values.get(key)
+                previous_value = previous_values.get(key)
+                if current_values != previous_value and current_value != '0':
+                    is_error = True
+
+                conn.execute('insert into crc_interfaces (key, value) values (?, ?)', (key, current_value))
+
+            conn.commit()
+
+        if is_error:
+            return ['CRC Error', 'NOK']
+
+        return ['CRC Error', 'OK']
 
 
+class FECError(BaseCheck):
+
+    def __init__(self, engine):
+        self.engine = engine
+
+    def cmd(self):
+        return 'show interfaces | grep "twentyFiveGigE|hundredGigE|FEC" | except "FEC status is" | except "Forward Error" | no-more'
+
+    def call_back(self, data, timestamp):
+        conn = self.engine.get_db_connection()
+        is_error = False
+        with contextlib.closing(conn):
+            conn.execute('CREATE TABLE IF NOT EXISTS fec_interfaces (key text, value text)')
+
+            rows = conn.execute('SELECT key, value from fec_interfaces')
+            previous_values = dict([(k, v) for k, v in rows])
+
+            conn.execute('delete from fec_interfaces')
+
+            current_values = {}
+            lines = data.splitlines()
+            i = 0
+            while i < len(lines):
+                line = lines[i]
+                i += 1
+                if not line or 'show interfaces' in line:
+                    continue
+                match = re.match('^(?P<if_name>(twentyFiveGigE|hundredGigE|tengigabit|fortyGigE) .*?\s)', line)
+                if match is not None:
+                    if_name = match.groupdict()['if_name'].strip()
+                    next_line = lines[i]
+                    i += 1
+                    if 'FEC bit' in next_line:
+                        values = next_line.split(',')
+                        values2 = values[0].strip().split(' ')
+                        fec = values2[0].strip()
+                        current_values[if_name] = fec
+
+            #compare with previous values
+            for key in current_values:
+                current_value = current_values.get(key)
+                previous_value = previous_values.get(key)
+                if current_values != previous_value and current_value != '0':
+                    is_error = True
+
+                conn.execute('insert into fec_interfaces (key, value) values (?, ?)', (key, current_value))
+
+            conn.commit()
+
+        if is_error:
+            return ['FEC Error', 'NOK']
+
+        return ['FEC Error', 'OK']
 
 
 if __name__ == '__main__':
-    text = "Total      :  3203289088, MaxUsed    :  1254072320 [05/21/2018 08:03:16]"
+    text = "     0 CRC, 0 overrun, 0 discarded"
     values = text.split(',')
-    values2 = values[0].split(':')
-    cpu = values2[1].strip()
+    values2 = values[0].strip().split(' ')
+    cpu = values2[0].strip()
     print(cpu)
