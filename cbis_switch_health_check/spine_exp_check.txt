@@ -1,0 +1,27 @@
+show ip bgp vrf vim sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf sig sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf public_sig sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf voip sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf rcs sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf s1 sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf media_ps sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf ims sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf ut_ims sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf db_ps sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf bss_vas sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf huawei_oam sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip ospf vrf gi_inet1 neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf vrf gi_corp_inet_ll neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf vrf ims neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf vrf s1 neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf vrf media_ps neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf vrf sig neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf vrf bss_vas neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf vrf huawei_oam neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf vrf gi_inet2 neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf  vrf ut_ims neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ipv6 ospf vrf gi_inet1 neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ipv6 ospf vrf gi_corp_inet_ll neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ipv6 ospf vrf ims neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ipv6 ospf vrf gi_inet2 neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ipv6 ospf vrf ut_ims neighbor | except "FULL|Neighbor ID" ignore-case | no-more

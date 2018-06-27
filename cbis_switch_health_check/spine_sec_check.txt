@@ -1,0 +1,2 @@
+show ip bgp vrf db_udc  sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf oam  sum | grep "active|connect|idle|open" ignore-case | no-more

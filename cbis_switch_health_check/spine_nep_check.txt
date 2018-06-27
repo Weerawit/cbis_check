@@ -1,0 +1,10 @@
+show ip bgp vrf db_ps sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf sig sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf public_sig sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf voip sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf rcs sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf bss_vas sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf vim sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf huawei_oam sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf db sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf db_udc sum | grep "active|connect|idle|open" ignore-case | no-more

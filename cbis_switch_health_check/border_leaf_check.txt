@@ -1,0 +1,30 @@
+show ip bgp vrf nep_db sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf db_ps sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf nep_db_udc sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf public_sig sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf sec_db_udc sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf s1 sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf media_ps sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf ims sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf ut_ims sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf infra_mgmt sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf nbound sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf nep_sig sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf nep_public_sig sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf nep_voip sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf nep_rcs sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf nep_bss_vas sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf exp_sig sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf exp_public_sig sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf exp_voip sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf exp_rcs sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf exp_bss_vas sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf mgt_db sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf ims sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip bgp vrf ut_ims sum | grep "active|connect|idle|open" ignore-case | no-more
+show ip ospf vrf gi_inet1 neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf vrf gi_corp_inet_ll neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ip ospf vrf gi_inet2 neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ipv6 ospf vrf gi_inet1 neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ipv6 ospf vrf gi_corp_inet_ll neighbor | except "FULL|Neighbor ID" ignore-case | no-more
+show ipv6 ospf vrf gi_inet2 neighbor | except "FULL|Neighbor ID" ignore-case | no-more
