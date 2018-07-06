@@ -387,7 +387,7 @@ class SriovZombieScript(BaseCheck):
 
 
 class ZabbixConfig(BaseCheck):
-    """Check zabbix's configuration on controller (StartPingers=3, StartPollers=15
+    """Check zabbix's configuration on controller (StartPingers=3, StartPollers >= 15
     in /etc/zabbix/zabbix_server.conf
     """
     def init_table(self):
@@ -419,7 +419,7 @@ class ZabbixConfig(BaseCheck):
         output = ''
         for row in self.conn.execute("select distinct host from zabbix_conf "
                                      "where (key = 'StartPingers' and value != '3') "
-                                     "or (key = 'StartPollers' and value != '15') "
+                                     "or (key = 'StartPollers' and value < '15') "
                                      "order by host"):
             output += '%s,NOK\n\r' % row[0]
 
