@@ -3,6 +3,7 @@
 
 from __future__ import print_function
 import abc
+import collections
 
 
 class BaseCheck(object):
@@ -827,6 +828,68 @@ class IronicNodelist(BaseCheck):
     def summary(self):
         output = ''
         for row in self.conn.execute("select distinct host from ironic_node_list "
+                                     "order by host",):
+            output += '%s,NOK\n\r' % row[0]
+
+        return output
+
+
+class EthToolCheck(BaseCheck):
+    """Check ethtool -S on ens1f0,ens1f1,ens3f0,ens3f1,ens6f0,ens6f1 with key rx_discards_phy
+
+     """
+
+    def __init__(self, engine):
+        self.old_data = collections.defaultdict(dict)
+        super(EthToolCheck, self).__init__(engine)
+
+    def init_table(self):
+
+        self.conn = self.engine.get_db_connection()
+        self.conn.execute('CREATE TABLE IF NOT EXISTS ethtools (host text, key text, value text, is_change text)')
+        for row in self.conn.execute('select host, key, value from ethtools'):
+            self.old_data[row[0]][row[1]] = row[2]
+        self.conn.execute('DELETE FROM ethtools')
+
+    def cmd(self):
+        if self.engine.test_flag:
+            return 'cat /Users/weerawit/Downloads/compute.log'
+        else:
+            interface_list = ['ens1f0', 'ens1f1', 'ens3f0', 'ens3f1', 'ens6f0', 'ens6f1']
+            command = ''
+            for interface in interface_list:
+                command += 'echo %s;/usr/sbin/ethtool -S %s | grep rx_discards_phy;' % (interface, interface)
+
+            return command
+
+    def host_pattern(self):
+        return 'compute-*'
+
+    def call_back(self, hostname, data, timestamp):
+
+        current_interface = ''
+        for line in data.splitlines():
+            if line:
+                if line.startswith('ens'):
+                    current_interface = line.strip()
+                    continue
+                else:
+                    key, value = line.split(':')
+
+                    key = '{0}_{1}'.format(current_interface, key.strip())
+                    is_change = 'N'
+                    try:
+                        if self.old_data.get(hostname).get(key) != value.strip():
+                            is_change = 'Y'
+                    except AttributeError:
+                        pass
+
+                    self.conn.execute('insert into ethtools (host, key, value, is_change) values (?, ?, ?, ?)', (hostname, key.strip(), value.strip(), is_change))
+                    self.conn.commit()
+
+    def summary(self):
+        output = ''
+        for row in self.conn.execute("select distinct host from ethtools where is_change ='Y' "
                                      "order by host",):
             output += '%s,NOK\n\r' % row[0]
 
