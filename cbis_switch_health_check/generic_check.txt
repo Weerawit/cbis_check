@@ -1,4 +1,4 @@
-show interfaces description | except "unused port|Vlan" | grep "NO  admin" | no-more', Interface Status
+show interfaces description | except "unused port|Vlan" | grep "NO  admin" | no-more, Interface Status
 show system | grep "down" | no-more
 show fefd | grep "Unknown|Err-disabled" ignore-case | no-more
 show alarms | except "Controlling Bridge:|Minor Alarms|No minor alarms|Major Alarms|No major alarms|===|-----|Alarm Type" | no-more

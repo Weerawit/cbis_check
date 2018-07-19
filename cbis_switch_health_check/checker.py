@@ -26,8 +26,9 @@ class BaseCheck(object):
 class GenericCheck(BaseCheck):
     def __init__(self, cmd_str, title=None):
         self.cmd_str = cmd_str
+        self.cmd_title = cmd_str.split('|')[0].strip()
         if title is None:
-            self.title = cmd_str.split('|')[0].strip()
+            self.title = self.cmd_title
         else:
             self.title = title
 
@@ -42,7 +43,7 @@ class GenericCheck(BaseCheck):
             i += 1
             if not line:
                 continue
-            if self.title not in line:
+            if self.cmd_title not in line:
                 return [self.title, 'NOK']
         return [self.title, 'OK']
 
