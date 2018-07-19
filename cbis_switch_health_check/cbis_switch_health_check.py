@@ -43,7 +43,7 @@ class CheckEngine(object):
     def __setup(self):
 
         generic_check = self.__load_config('generic_check.txt')
-        generic_check.extend([CPUStatus(), MemoryStatus(), CRCError(self), FECError(self)])
+        generic_check.extend([CPUStatus(), MemoryStatus(), CRCError(self)])
 
         spine_mgt = self.__load_config('spine_mgt_check.txt')
         spine_mgt.extend(generic_check)
@@ -64,11 +64,12 @@ class CheckEngine(object):
         border_leaf.extend(generic_check)
 
         return {'spine-mgt': spine_mgt,
-               'spine-nep': spine_nep,
-               'spine-exp': spine_exp,
-               'spine-fabric': spine_fabric,
-               'spine-sec': spine_sec,
-               'border-leaf': border_leaf
+                'spine-nep': spine_nep,
+                'spine-exp': spine_exp,
+                'spine-fabric': spine_fabric,
+                'spine-sec': spine_sec,
+                'border-leaf': border_leaf,
+                'leaf': generic_check
                }
 
     def get_db_connection(self, in_memory=False):
@@ -168,7 +169,7 @@ class CheckEngine(object):
 
         parser.add_argument('-type', '--type',
                             required=True,
-                            choices=['spine-mgt', 'spine-nep', 'spine-exp', 'spine-fabric', 'spine-sec', 'border-leaf'],
+                            choices=['spine-mgt', 'spine-nep', 'spine-exp', 'spine-fabric', 'spine-sec', 'border-leaf', 'leaf'],
                             help='Type of switch')
 
         parser.add_argument('-o', '--output',

@@ -1,3 +1,4 @@
+show vlt brief | grep "down|no" | no-more
 show ip bgp vrf db sum | grep "active|connect|idle|open" ignore-case | no-more
 show ip bgp vrf infra_mgmt sum | grep "active|connect|idle|open" ignore-case | no-more
 show ip bgp vrf nep_huawei_oam sum | grep "active|connect|idle|open" ignore-case | no-more
