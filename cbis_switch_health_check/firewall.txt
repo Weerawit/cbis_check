@@ -1,0 +1,4 @@
+show chassis fpc pic-status | no-more | except online | except node
+show chassis cluster status | match node0 | match secondary
+show chassis alarms no-forwarding | except No
+show system core-dumps no-forwarding | except No
