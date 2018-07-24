@@ -6,3 +6,5 @@ MANIFEST
 VERSION
 *.db
 docs
+build
+build/*

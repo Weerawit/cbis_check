@@ -285,11 +285,18 @@ def main(args=sys.argv[1:]):
 
     if type != 'firewall':
         check_engine.check_switch()
+
+        logger.info(
+            'check complete\n output locate on : %s\n csv file on : %s\n history_file on : %s\n logging_file on : %s' %
+            (output_file, csv_file, history_file, logging_file))
     else:
         check_engine.check_firewall()
 
-    logger.info('check complete\n output locate on : %s\n csv file on : %s\n history_file on : %s\n logging_file on : %s' %
-                (output_file, csv_file, history_file, logging_file))
+        logger.info(
+            'check complete\n output locate on : %s\n csv file on : %s' %
+            (output_file, csv_file))
+
+
 
 
 if __name__ == "__main__":
