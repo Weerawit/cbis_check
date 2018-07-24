@@ -48,6 +48,33 @@ class GenericCheck(BaseCheck):
         return [self.title, 'OK']
 
 
+class GenericFirewallCheck(BaseCheck):
+    def __init__(self, cmd_str, title=None):
+        self.cmd_str = cmd_str.strip()
+        cmd_list = cmd_str.split('|')
+        self.cmd_last = cmd_list[len(cmd_list) - 1].strip()
+        self.cmd_title = cmd_list[0].strip()
+        if title is None:
+            self.title = cmd_list[0].strip()
+        else:
+            self.title = title
+
+    def cmd(self):
+        return self.cmd_str
+
+    def call_back(self, data, timestamp):
+        lines = data.splitlines()
+        i = 0
+        while i < len(lines) - 1:
+            line = lines[i]
+            i += 1
+            if not line:
+                continue
+            if self.cmd_title not in line and self.cmd_last not in line and '...' not in line and 'primary:node0' not in line and 'show ' not in line:
+                return [self.title, 'NOK']
+        return [self.title, 'OK']
+
+
 class CPUStatus(BaseCheck):
 
     def cmd(self):
