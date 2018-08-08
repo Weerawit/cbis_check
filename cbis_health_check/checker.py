@@ -916,8 +916,12 @@ class StorageSSDCheck(BaseCheck):
         return 'cephstorage'
 
     def call_back(self, hostname, data, timestamp):
+        count = 0
+        for line in data.splitlines():
+            if line:
+                count += 1
 
-        if len(data.splitlines()) < 2:
+        if count < 2:
             self.conn.execute('insert into storage_ssd (host) values (?)',
                               (hostname.strip(),))
             self.conn.commit()
