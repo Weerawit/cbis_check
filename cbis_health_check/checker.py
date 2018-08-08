@@ -894,3 +894,38 @@ class EthToolCheck(BaseCheck):
             output += '%s,NOK\n\r' % row[0]
 
         return output
+
+
+class StorageSSDCheck(BaseCheck):
+    """Check /opt/MegaRAID/storcli/storcli64 /c0 show should have 2 SSD
+
+     """
+    def init_table(self):
+
+        self.conn = self.engine.get_db_connection(in_memory=True)
+        self.conn.execute('CREATE TABLE IF NOT EXISTS storage_ssd (host text, key text, value text)')
+        self.conn.execute('DELETE FROM storage_ssd')
+
+    def cmd(self):
+        if self.engine.test_flag:
+            return 'cat /Users/weerawit/Downloads/compute.log'
+        else:
+            return "sudo /opt/MegaRAID/storcli/storcli64 /c0 show | grep SSD"
+
+    def host_pattern(self):
+        return 'cephstorage'
+
+    def call_back(self, hostname, data, timestamp):
+
+        if len(data.splitlines()) < 2:
+            self.conn.execute('insert into storage_ssd (host) values (?)',
+                              (hostname.strip(),))
+            self.conn.commit()
+
+    def summary(self):
+        output = ''
+        for row in self.conn.execute("select distinct host from storage_ssd "
+                                     "order by host",):
+            output += '%s,NOK\n\r' % row[0]
+
+        return output
