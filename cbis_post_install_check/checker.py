@@ -568,3 +568,96 @@ class CinderConfiguration(BaseCheck):
             output += '%s,NOK\n\r' % row[0]
 
         return output
+
+
+class UndercloudMTU(BaseCheck):
+    """Check MTU=9000 configuration in undercloud
+    /etc/sysconfig/network-scripts/ifcfg-eth0
+    /etc/sysconfig/network-scripts/ifcfg-eth1
+    /etc/sysconfig/network-scripts/ifcfg-br-ctlplane
+
+    """
+
+    def init_table(self):
+        self.conn = self.engine.get_db_connection(in_memory=True)
+        self.conn.execute('CREATE TABLE IF NOT EXISTS undercloud_mtu (host text, key text, value text)')
+        self.conn.execute('DELETE FROM undercloud_mtu')
+
+    def cmd(self):
+        if self.engine.test_flag:
+            return 'cat /Users/weerawit/Downloads/compute.log'
+        else:
+            return 'grep MTU /etc/sysconfig/network-scripts/ifcfg-*'
+
+    def host_pattern(self):
+        return 'undercloud'
+
+    def call_back(self, hostname, data, timestamp):
+        count = 3
+        for line in data.splitlines():
+            if line:
+                try:
+                    if '/etc/sysconfig/network-scripts/ifcfg-eth0' in line:
+                        count = count - 1
+                    elif '/etc/sysconfig/network-scripts/ifcfg-eth1' in line:
+                        count = count - 1
+                    elif '/etc/sysconfig/network-scripts/ifcfg-br-ctlplane' in line:
+                        count = count - 1
+                except ValueError:
+                    pass
+
+        if count > 0:
+            self.conn.execute('insert into undercloud_mtu (host) values (?)',
+                              (hostname,))
+            self.conn.commit()
+
+    def summary(self):
+        output = ''
+        for row in self.conn.execute("select distinct host from undercloud_mtu "):
+            output += '%s,NOK\n\r' % row[0]
+
+        return output
+
+
+class SriovTrustOn(BaseCheck):
+    """Check VF trust setting should be on in SRIOV compute
+    """
+
+    def init_table(self):
+        self.conn = self.engine.get_db_connection(in_memory=True)
+        self.conn.execute('CREATE TABLE IF NOT EXISTS sriov_trust_on (host text, key text, value text)')
+        self.conn.execute('DELETE FROM sriov_trust_on')
+
+    def cmd(self):
+        if self.engine.test_flag:
+            return 'cat /Users/weerawit/Downloads/compute.log'
+        else:
+            return 'grep config_sriov.py /usr/lib/systemd/system/sriov.service;sudo ip link show |grep vf |grep "trust off"'
+
+    def host_pattern(self):
+        return 'compute-*'
+
+    def call_back(self, hostname, data, timestamp):
+        for line in data.splitlines():
+            if line:
+                try:
+                    if line:
+                        if '--vf_num' in line:
+                            values = line.split('--vf_num')
+                            if values[1].strip() == '0':
+                                break
+                        else:
+                            self.conn.execute('insert into sriov_trust_on (host) values (?)',
+                                              (hostname,))
+                            self.conn.commit()
+                            break
+
+                except ValueError:
+                    pass
+
+    def summary(self):
+        output = ''
+        for row in self.conn.execute("select distinct host from sriov_trust_on "):
+            output += '%s,NOK\n\r' % row[0]
+
+        return output
