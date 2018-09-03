@@ -570,7 +570,7 @@ class CinderConfiguration(BaseCheck):
         return output
 
 
-class UndercloudMTU(BaseCheck):
+class UndercloudMTUConfig(BaseCheck):
     """Check MTU=9000 configuration in undercloud
     /etc/sysconfig/network-scripts/ifcfg-eth0
     /etc/sysconfig/network-scripts/ifcfg-eth1
@@ -614,6 +614,52 @@ class UndercloudMTU(BaseCheck):
     def summary(self):
         output = ''
         for row in self.conn.execute("select distinct host from undercloud_mtu "):
+            output += '%s,NOK\n\r' % row[0]
+
+        return output
+
+
+class UndercloudMTURuntime(BaseCheck):
+    """Check MTU=9000 with ifconfig in undercloud
+    ifconfig command
+    """
+
+    def init_table(self):
+        self.conn = self.engine.get_db_connection(in_memory=True)
+        self.conn.execute('CREATE TABLE IF NOT EXISTS undercloud_mtu_runtime (host text, key text, value text)')
+        self.conn.execute('DELETE FROM undercloud_mtu_runtime')
+
+    def cmd(self):
+        if self.engine.test_flag:
+            return 'cat /Users/weerawit/Downloads/compute.log'
+        else:
+            return 'sudo ifconfig |grep 9000'
+
+    def host_pattern(self):
+        return 'undercloud'
+
+    def call_back(self, hostname, data, timestamp):
+        count = 3
+        for line in data.splitlines():
+            if line:
+                try:
+                    if 'eth0' in line:
+                        count = count - 1
+                    elif 'eth1' in line:
+                        count = count - 1
+                    elif 'br-ctlplane' in line:
+                        count = count - 1
+                except ValueError:
+                    pass
+
+        if count > 0:
+            self.conn.execute('insert into undercloud_mtu_runtime (host) values (?)',
+                              (hostname,))
+            self.conn.commit()
+
+    def summary(self):
+        output = ''
+        for row in self.conn.execute("select distinct host from undercloud_mtu_runtime "):
             output += '%s,NOK\n\r' % row[0]
 
         return output
