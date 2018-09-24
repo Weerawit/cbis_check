@@ -271,14 +271,14 @@ class CephOSDConfig(BaseCheck):
         return output
 
 
-class NTPStatum(BaseCheck):
+class NTPStatus(BaseCheck):
     """Check ntpq -p should see 3 ntp server in all controller
      """
 
     def init_table(self):
         self.conn = self.engine.get_db_connection(in_memory=True)
-        self.conn.execute('CREATE TABLE IF NOT EXISTS ntp_statum (host text, key text, value text)')
-        self.conn.execute('DELETE FROM ntp_statum')
+        self.conn.execute('CREATE TABLE IF NOT EXISTS ntp_status (host text, key text, value text)')
+        self.conn.execute('DELETE FROM ntp_status')
 
     def cmd(self):
         if self.engine.test_flag:
@@ -298,7 +298,7 @@ class NTPStatum(BaseCheck):
                 else:
                     count += 1
 
-        self.conn.execute('insert into ntp_statum (host, value) values (?, ?)',
+        self.conn.execute('insert into ntp_status (host, value) values (?, ?)',
                           (hostname, str(count)))
         self.conn.commit()
 
@@ -508,7 +508,7 @@ class CinderServiceList(BaseCheck):
 
 
 class SriovNumberOfVF(BaseCheck):
-    """Check number of vf in compute node, should be 380 (4*95)
+    """Check number of vf in compute node, should be 56 (4*14)
      """
 
     def init_table(self):
@@ -540,7 +540,7 @@ class SriovNumberOfVF(BaseCheck):
     def summary(self):
         output = ''
         for row in self.conn.execute("select distinct host from sriov_number_vf "
-                                     "where value != '380' "
+                                     "where value != '56' "
                                      "order by host", ):
             output += '%s,NOK\n\r' % row[0]
 
