@@ -304,7 +304,7 @@ class NTPStatus(BaseCheck):
 
     def summary(self):
         output = ''
-        for row in self.conn.execute("select distinct host from ntp_statum "
+        for row in self.conn.execute("select distinct host from ntp_status "
                                      "where value != '3' "
                                      "order by host",):
             output += '%s,NOK\n\r' % row[0]
