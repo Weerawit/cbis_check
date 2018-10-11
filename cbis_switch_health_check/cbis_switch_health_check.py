@@ -104,7 +104,7 @@ class CheckEngine(object):
             child.expect('[Pp]assword: ')
 
         child.sendline(self.password)
-        i = child.expect(['Permission denied', '#'])
+        i = child.expect(['Permission denied', 'Last successful'])
 
         if i == 0:
             logger.info('Permission denied on host. Can\'t login')
