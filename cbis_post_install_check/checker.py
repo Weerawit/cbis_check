@@ -574,8 +574,6 @@ class UndercloudMTUConfig(BaseCheck):
     """Check MTU=9000 configuration in undercloud
     /etc/sysconfig/network-scripts/ifcfg-eth0
     /etc/sysconfig/network-scripts/ifcfg-eth1
-    /etc/sysconfig/network-scripts/ifcfg-br-ctlplane
-
     """
 
     def init_table(self):
@@ -587,13 +585,13 @@ class UndercloudMTUConfig(BaseCheck):
         if self.engine.test_flag:
             return 'cat /Users/weerawit/Downloads/compute.log'
         else:
-            return 'grep MTU /etc/sysconfig/network-scripts/ifcfg-*'
+            return 'grep MTU /etc/sysconfig/network-scripts/ifcfg-eth*'
 
     def host_pattern(self):
         return 'undercloud'
 
     def call_back(self, hostname, data, timestamp):
-        count = 3
+        count = 2
         for line in data.splitlines():
             if line:
                 try:
