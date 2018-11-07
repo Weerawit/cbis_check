@@ -933,3 +933,40 @@ class StorageSSDCheck(BaseCheck):
             output += '%s,NOK\n\r' % row[0]
 
         return output
+
+
+class FreeMemCheck(BaseCheck):
+    """Check free -h, Total memory should be 251G
+
+     """
+    def init_table(self):
+
+        self.conn = self.engine.get_db_connection(in_memory=True)
+        self.conn.execute('CREATE TABLE IF NOT EXISTS freemem (host text, key text, value text)')
+        self.conn.execute('DELETE FROM freemem')
+
+    def cmd(self):
+        if self.engine.test_flag:
+            return 'cat /Users/weerawit/Downloads/compute.log'
+        else:
+            return "free -h | grep -i mem"
+
+    def host_pattern(self):
+        return '*'
+
+    def call_back(self, hostname, data, timestamp):
+        columns = data.split('        ')
+        if '251G' not in columns[1]:
+            self.conn.execute('insert into freemem (host) values (?)',
+                              (hostname.strip(),))
+            self.conn.commit()
+
+    def summary(self):
+        output = ''
+        for row in self.conn.execute("select distinct host from freemem "
+                                     "order by host",):
+            output += '%s,NOK\n\r' % row[0]
+
+        return output
+
+
