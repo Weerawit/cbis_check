@@ -77,7 +77,8 @@ class CheckEngine(object):
                 'spine-sec': spine_sec,
                 'border-leaf': border_leaf,
                 'leaf': generic_check,
-                'firewall': firewall
+                'firewall': firewall,
+                'oob': generic_check
                }
 
     def get_db_connection(self, in_memory=False):
@@ -236,7 +237,7 @@ class CheckEngine(object):
 
         parser.add_argument('-type', '--type',
                             required=True,
-                            choices=['spine-mgt', 'spine-nep', 'spine-exp', 'spine-fabric', 'spine-sec', 'border-leaf', 'leaf', 'firewall'],
+                            choices=['spine-mgt', 'spine-nep', 'spine-exp', 'spine-fabric', 'spine-sec', 'border-leaf', 'leaf', 'firewall', 'oob'],
                             help='Type of switch')
 
         parser.add_argument('-o', '--output',

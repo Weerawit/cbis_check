@@ -163,8 +163,11 @@ class CRCError(BaseCheck):
             for key in current_values:
                 current_value = current_values.get(key)
                 previous_value = previous_values.get(key)
-                if abs(int(current_value) - int(previous_value) >= 1000) and current_value != '0':
-                    is_error = True
+                try:
+                    if abs(int(current_value) - int(previous_value) >= 1000) and current_value != '0':
+                        is_error = True
+                except TypeError:
+                    pass
 
                 conn.execute('insert into crc_interfaces (key, value) values (?, ?)', (key, current_value))
 
